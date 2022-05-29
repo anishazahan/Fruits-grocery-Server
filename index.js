@@ -16,20 +16,19 @@ const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifytoken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).send({ message: 'UnAuthorized access' });
-  }
-  const token = authHeader.split(' ')[1];
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+function verifyToken(token) {
+  let email;
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
     if (err) {
-      return res.status(403).send({ message: 'Forbidden access' })
+      email = "Invalid email";
     }
-    req.decoded = decoded;
-    next();
+    if (decoded) {
+      email = decoded;
+    }
   });
+  return email;
 }
+
 
 
 
@@ -44,21 +43,30 @@ async function run(){
     const orderCollection = client.db('fruits-warehouse').collection('order');
     const userCollection = client.db('fruits-warehouse').collection('user');
     
-    app.get("/product",async (req, res) => {
+    app.get("/product", async (req, res) => {
  
       let query;
       if (req.query.email) {
+        const tokenInfo = req.headers.authorization;
+        const decoded = verifytoken(tokenInfo);
         const email = req.query.email;
+ 
+        if (email === decoded.email) {
           query = { email };
           const result = await productCollection.find(query).toArray();
           res.send(result);
         } else {
+          res.send({ message: "Unauthorized Access" });
+        }
+ 
+      } else {
         query = {};
         const result = await productCollection.find(query).toArray();
         res.send(result);
       }
  
     });
+
 
 
     app.get('/product/:id', async(req, res) =>{
@@ -71,6 +79,7 @@ async function run(){
     app.put("/product/:id", async (req, res) => {
       const { id } = req.params;
       const data = req.body;
+     
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       const updateQuantity = {
@@ -103,7 +112,20 @@ async function run(){
         res.send({message: 'No documents matched the query'});
       }
     });
+
+    app.post("/login", (req, res) => {
+      const email = req.body;
+      const token = jwt.sign(email, process.env.ACCESS_SECRET_TOKEN);
+      res.send({ token });
+    });
+ 
+
+
+
+
   }finally{
+
+
 
   }
 }
