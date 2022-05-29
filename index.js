@@ -103,14 +103,12 @@ async function run(){
       res.send(result);
     });
 
-
     app.post("/product", async (req, res) => {
       const product = req.body;
 
       const result = await productCollection.insertOne(product);
       res.send(result);
     });
-
     app.delete("/product/:id", async(req, res) => {
       const { id } = req.params;
      console.log(req.params);
@@ -122,21 +120,11 @@ async function run(){
         res.send({message: 'No documents matched the query'});
       }
     });
-
-
-  
-
   }finally{
 
   }
 }
 run().catch(console.dir);
-
-
-
-
-
-
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
