@@ -104,78 +104,27 @@ async function run(){
     });
 
 
-    app.get('/user', verifytoken, async (req, res) => {
-      const users = await userCollection.find().toArray();
-      res.send(users);
+    app.post("/product", async (req, res) => {
+      const product = req.body;
+
+      const result = await productCollection.insertOne(product);
+      res.send(result);
     });
 
-
-
-   
-
-
-    app.put('/user/:email', async (req, res) => {
-      const email = req.params.email;
-      const user = req.body;
-      const filter = { email: email };
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: user,
-      };
-      const result = await userCollection.updateOne(filter, updateDoc, options);
-      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-      res.send({ result, token });
-    });
-
-    
-   
-
-    app.get('/booking',verifytoken, async (req, res) => {
-      const patient = req.query.patient;
-      const decodedEmail = req.decoded.email;
-      if (patient === decodedEmail) {
-        const query = { patient: patient };
-        const bookings = await bookingCollection.find(query).toArray();
-        return res.send(bookings);
-      }
-      else {
-        return res.status(403).send({ message: 'forbidden access' });
+    app.delete("/product/:id", async(req, res) => {
+      const { id } = req.params;
+     console.log(req.params);
+      const query = { _id: ObjectId(id) };
+      const result = await productCollection.deleteOne(query);
+      if (result.deletedCount === 1) {
+        res.send({message: 'successfully deleted'});
+      } else {
+        res.send({message: 'No documents matched the query'});
       }
     });
 
-   
 
-    app.post('/booking', async (req, res) => {
-      const booking = req.body;
-      const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient }
-      const exists = await bookingCollection.findOne(query);
-      if (exists) {
-        return res.send({ success: false, booking: exists })
-      }
-      const result = await bookingCollection.insertOne(booking);
-      console.log('sending email');
-      sendAppointmentEmail(booking);
-      return res.send({ success: true, result });
-    });
-
-    app.patch('/booking/:id',verifytoken, async(req, res) =>{
-      const id  = req.params.id;
-      const payment = req.body;
-      const filter = {_id: ObjectId(id)};
-      const updatedDoc = {
-        $set: {
-          paid: true,
-          transactionId: payment.transactionId
-        }
-      }
-
-      const result = await paymentCollection.insertOne(payment);
-      const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
-      res.send(updatedBooking);
-    })
-
- 
-
+  
 
   }finally{
 
