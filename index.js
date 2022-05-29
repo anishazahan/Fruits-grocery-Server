@@ -37,46 +37,29 @@ async function run(){
 
   try{
 
-    // await client.connect();
-    // const productsCollection=client.db("fruits-warehouse").collection('product');
-    
-
-    // app.get('/product',async (req,res) =>{
-
-    //   const query = {};
-    //     const cursor = productsCollection.find(query);
-    //     const products =await cursor.toArray();
-    //     res.send(products);
-        
-    // })
+   
 
     await client.connect();
     const productCollection = client.db('fruits-warehouse').collection('product');
     const orderCollection = client.db('fruits-warehouse').collection('order');
     const userCollection = client.db('fruits-warehouse').collection('user');
-    // const doctorCollection = client.db('doctors_portal').collection('doctors');
-    // const paymentCollection = client.db('doctors_portal').collection('payments');
-
     
-
-    // app.post('/create-payment-intent',verifytoken, async(req, res) =>{
-    //   const service = req.body;
-    //   const price = service.price;
-    //   const amount = price*100;
-    //   const paymentIntent = await stripe.paymentIntents.create({
-    //     amount : amount,
-    //     currency: 'usd',
-    //     payment_method_types:['card']
-    //   });
-    //   res.send({clientSecret: paymentIntent.client_secret})
-    // });
-
-    app.get('/product', async (req, res) => {
-      const query = {};
-      const cursor = productCollection.find(query);
-      const products = await cursor.toArray();
-      res.send(products);
+    app.get("/product",async (req, res) => {
+ 
+      let query;
+      if (req.query.email) {
+        const email = req.query.email;
+          query = { email };
+          const result = await productCollection.find(query).toArray();
+          res.send(result);
+        } else {
+        query = {};
+        const result = await productCollection.find(query).toArray();
+        res.send(result);
+      }
+ 
     });
+
 
     app.get('/product/:id', async(req, res) =>{
       const id = req.params.id;
